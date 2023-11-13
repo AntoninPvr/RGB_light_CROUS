@@ -1,7 +1,10 @@
 #include "controller.h"
 
 void writeData() {
-    asm {
-        nop
-    }
+    asm volatile (
+        "mov %0"
+        :
+        : "r"()
+        : "r16"
+    );
 }
