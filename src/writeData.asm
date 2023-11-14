@@ -1,5 +1,5 @@
 ; write data to led
-.equ PIN, 0b11111101
+.equ PIN = 0b11111101
 
 .section .text
 .global writeData
