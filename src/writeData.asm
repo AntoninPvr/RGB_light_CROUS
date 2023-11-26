@@ -1,64 +1,46 @@
-; write data to led
-.equ PIN = 0b11111101
+;
+; writeData.asm
+;
+; Created: 26/11/2023 17:41:07
+; Author : Antonin
+;
+	.include "m328pdef.inc"
+	.equ	mask	=	0x01
+	.equ	pinMask	=	0x01
+	.equ	numB	=	8
 
-.section .text
-.global writeData
+	.dseg
+	.org	SRAM_START
+sArr:	.BYTE	numB			; allocate bytes in SRAM for array
 
-writeData:
-    add r24, r22
-    adc r25, zero
-    lds r16, Z
-    increment:
+	.cseg
+	.org	0x00
+	ldi	XL,LOW(sArr)		; initialize X pointer
+	ldi	XH,HIGH(sArr)		; to SRAM array address
 
+	ldi	ZL,LOW(2*pArr)		; initialize Z pointer
+	ldi	ZH,HIGH(2*pArr)		; to pmem array address
 
-    sbrs r16, 0
-    rjmp data_0
-    data_1:
-    in r16, PORTB   ;1
-    ori r16, PIN
-    out PORTB, r16  ;6 cycles
-    nop
-    nop
-    nop
-    nop
-    in r16, PORTB   ;0
-    andi r16, PIN
-    out PORTB, r16  ;13 cycles
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    rjmp increment
+	ldi	r17, numB		; initialize loop count to number of bytes
 
-    data_0:
-    in r16, PORTB   ;1
-    ori r16, PIN
-    out PORTB, r16  ;11 cycles
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    in r16, PORTB   ;0
-    andi r16, PIN
-    out PORTB, r16  ;10 cycles
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    rjmp increment
+arrLp:	lpm	r16,Z+			; load value from pmem array
+	st	X+,r16			; store value to SRAM array
+	dec	r17			; decrement loop count
+	brne	arrLp			; repeat loop for all bytes in array
 
-    end_of_program:
-    ret
+	ldi r17, pinMask
+	out DDRB, r17
+start:
+	ldi	XL,LOW(sArr)		; initialize X pointer
+	ldi	XH,HIGH(sArr)		; to SRAM array address
+	ldi r17, numB
+	ldi r18, mask
+loop:
+	ld r16, X+
+	and r16, r18
+	out PORTB, r16
+	dec r17
+	brne	loop			; infinite loop
+	rjmp start
+
+pArr:	.db	0,1,1,0,0,0,1,0	; 
